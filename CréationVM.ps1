@@ -8,6 +8,7 @@ New-AzVm `
     -Name 'SRV-AD' `
     -Location 'East US' `
     -VirtualNetworkName 'myVnet' `
+    -Credential $AzVMWindowsCredentials
     -SubnetName 'mySubnet' `
     -SecurityGroupName 'myNetworkSecurityGroup' `
     -PublicIpAddressName 'myPublicIpAddress' `
