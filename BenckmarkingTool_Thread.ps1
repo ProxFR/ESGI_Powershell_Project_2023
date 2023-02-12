@@ -1,10 +1,13 @@
-$Scriptblock = { # Utilisation de la formule de Leibniz
+$decimals = Read-Host "Combien de décimales de Pi souhaitez-vous calculer?" #10000000
+
+$CalculatePiDecimals = {
+    param($Limit)
+
     $k = 0
     $pi = 0
-    $limit = 10000000 + 5
     $sign = 1
-    Write-Host $limit
-    while ($k -lt $limit) {
+    Write-Host "Limite : $Limit"
+    while ($k -lt $Limit) {
         $pi = $pi + $sign * 4 / (2 * $k + 1)
         $k++
         $sign *= -1
@@ -21,7 +24,7 @@ Measure-Command {
         Write-Host "Lancement du thread $_" -ForegroundColor Green
         $PowerShell = [powershell]::Create()
         $PowerShell.RunspacePool = $RunspacePool
-        $PowerShell.AddScript($ScriptBlock).AddArgument($_)
+        $PowerShell.AddScript($CalculatePiDecimals).AddArgument($decimals + 5)
         $Jobs += $PowerShell.BeginInvoke()
     }
     
