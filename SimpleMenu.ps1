@@ -79,7 +79,12 @@ while ($continue){
         1 {commande de mon action 1}
         2 {commande de mon action 2}
         ########################################
-        3 {write-host "Choix 3" -ForegroundColor Red}
+        3 {
+            write-host "Choix 3" -ForegroundColor Red
+            $result = Import-Csv -Path '.\results\results.csv' | Sort-Object {[int]$_.Time}
+            $result | Format-Table -AutoSize
+            Read-Host -Prompt "Press any key to continue..."
+        }
         4 {
             Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
             BenchmarkingTool -decimals 10000000 -thread 1
