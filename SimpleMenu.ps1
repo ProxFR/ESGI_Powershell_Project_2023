@@ -69,7 +69,7 @@ while ($continue){
     write-host "`n------------ Benchmark/Stress the instance -------------" -ForegroundColor Green
     write-host "3. Show the comparison results" -ForegroundColor Green
     write-host "4. Start the benchmark (single thread)" -ForegroundColor Green
-    write-host "5. Start a stress test (all cores) /!\ Not working /!\" -ForegroundColor Green
+    write-host "5. Start a stress test (all cores)" -ForegroundColor Green
     write-host "6. Start an advanced stress test" -ForegroundColor Green
 
     write-host "`nx. exit`n" -ForegroundColor Magenta
@@ -78,6 +78,7 @@ while ($continue){
     switch ($choix){
         1 {commande de mon action 1}
         2 {commande de mon action 2}
+        ########################################
         3 {write-host "Choix 3" -ForegroundColor Red}
         4 {
             Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
@@ -86,9 +87,10 @@ while ($continue){
         }
         5 {
             Write-Host "Starting stress test" -foregroundColor DarkYellow
-            BenchmarkingTool -decimals 100000000 -thread 1
+            powershell.exe -File .\scripts\StressTool_Thread.ps1 # Start inside a new terminal to permit user to stop run space (CTRL+C)
             Read-Host -Prompt "Press any key to continue..."
         }
+        ########################################
         ‘x’ {$continue = $false}
         default {Write-Host "Choix invalide" -ForegroundColor Red}
     }
