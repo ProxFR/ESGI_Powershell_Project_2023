@@ -68,11 +68,11 @@ while ($continue){
     write-host "1. mon action 1" -ForegroundColor Cyan
     write-host "2. mon action 2" -ForegroundColor Cyan
 
-    write-host "`n------------ Benchmark/Stress the instance -------------" -ForegroundColor Green
+    write-host "`n------------ Benchmark/Stress the local instance -------------" -ForegroundColor Green
     write-host "3. Show the comparison results" -ForegroundColor Green
     write-host "4. Start the benchmark (single thread)" -ForegroundColor Green
     write-host "5. Start a stress test (all cores)" -ForegroundColor Green
-    write-host "6. Start an advanced stress test" -ForegroundColor Green
+    write-host "6. Start an advanced benchmark" -ForegroundColor Green
 
     write-host "`nx. exit`n" -ForegroundColor Magenta
 
@@ -120,6 +120,27 @@ while ($continue){
         5 {
             Write-Host "Starting stress test" -foregroundColor DarkYellow
             powershell.exe -File .\scripts\StressTool_Thread.ps1 # Start inside a new terminal to permit user to stop run space (CTRL+C)
+            Read-Host -Prompt "Press any key to continue..."
+        }
+        6 {
+            $inputValue = 0
+            do {
+                $inputValid = [uint]::TryParse(($threads = Read-Host 'How much threads do you want to use?'), [ref]$inputValue) # As to be check when 0 is entered
+                if (-not $inputValid) {
+                    Write-Host "your input was not a positive integer..." -ForegroundColor Red
+                }
+            } while (-not $inputValid)
+
+            $inputValue = 0
+            do {
+                $inputValid = [uint]::TryParse(($decimals = Read-Host 'How much Pi decimals you want to calculate? (default is 10000000)'), [ref]$inputValue)
+                if (-not $inputValid) {
+                    Write-Host "your input was not a positive integer..." -ForegroundColor Red
+                }
+            } while (-not $inputValid)
+
+            Write-Host "Starting stress test" -foregroundColor DarkYellow
+            powershell.exe -File .\scripts\StressTool_Thread.ps1 -decimals $decimals -thread $threads # Start inside a new terminal to permit user to stop run space (CTRL+C)
             Read-Host -Prompt "Press any key to continue..."
         }
         ########################################
