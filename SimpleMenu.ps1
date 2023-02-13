@@ -80,7 +80,7 @@ while ($continue){
         2 {commande de mon action 2}
         ########################################
         3 {
-            write-host "Choix 3" -ForegroundColor Red
+            write-host "Scoreboard (seconds)" -ForegroundColor DarkYellow
             $result = Import-Csv -Path '.\results\results.csv' | Sort-Object {[int]$_.Time}
             $result | Format-Table -AutoSize
             Read-Host -Prompt "Press any key to continue..."
