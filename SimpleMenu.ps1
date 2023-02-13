@@ -38,7 +38,9 @@ function BenchmarkingTool {
             Start-Sleep -Milliseconds 100
         }
     } | Select-Object TotalSeconds
-    Write-Host "Résultat : $($result.TotalSeconds) secondes" -ForegroundColor Yellow
+    $time = [math]::round($result.TotalSeconds,2)
+    Write-Host "Résultat : $time secondes" -ForegroundColor Yellow
+    return $time
 }
 
 ##################################################################################################################
@@ -81,14 +83,39 @@ while ($continue){
         ########################################
         3 {
             write-host "Scoreboard (seconds)" -ForegroundColor DarkYellow
-            $result = Import-Csv -Path '.\results\results.csv' | Sort-Object {[int]$_.Time}
-            $result | Format-Table -AutoSize
+            $scoreBoard = Import-Csv -Path '.\results\results.csv' | Sort-Object {[int]$_.Time}
+            $scoreBoard | Format-Table -AutoSize
             Read-Host -Prompt "Press any key to continue..."
         }
         4 {
             Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
-            BenchmarkingTool -decimals 10000000 -thread 1
+            $time = BenchmarkingTool -decimals 10000000 -thread 1
             Read-Host -Prompt "Press any key to continue..."
+
+            $saveScore = $true
+            while ($saveScore){
+            $choixSave = read-host “Voulez-vous sauvegarder votre score ? (yes/no)”
+            switch ($choixSave){
+                yes {
+                    Write-host "yes"
+                    $CPU = Read-Host "Enter you CPU Model"
+                    $score = [PSCustomObject]@{
+                        "CPU Model" = $CPU
+                        "Time" = $time
+                    }
+                    $score | Export-Csv -Path '.\results\results.csv' -Append -NoTypeInformation
+                    Write-Host "Score saved" -ForegroundColor Green
+
+                    $saveScore = $false
+                    Read-Host -Prompt "Press any key to continue..."
+                }
+                no {
+                    $saveScore = $false
+                }
+                default {Write-Host "Choix invalide" -ForegroundColor Red}
+            }
+            }
+
         }
         5 {
             Write-Host "Starting stress test" -foregroundColor DarkYellow
