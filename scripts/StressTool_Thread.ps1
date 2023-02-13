@@ -39,4 +39,4 @@ function StressTool {
 }
 
 
-start powershell {StressTool -decimals 10000000 -thread 100; Read-Host}
+StressTool -decimals 10000000 -thread 10
