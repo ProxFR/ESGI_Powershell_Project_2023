@@ -72,7 +72,7 @@ while ($continue){
     write-host "3. Show the comparison results" -ForegroundColor Green
     write-host "4. Start the benchmark (single thread)" -ForegroundColor Green
     write-host "5. Start a stress test (all cores)" -ForegroundColor Green
-    write-host "6. Start an advanced benchmark" -ForegroundColor Green
+    write-host "6. Start an advanced stress test" -ForegroundColor Green
 
     write-host "`nx. exit`n" -ForegroundColor Magenta
 
