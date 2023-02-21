@@ -1,13 +1,4 @@
-# Variable permettant de lister les vm qui existent dans Azure de type Windows uniquement
-$vm = Get-AzVM -ResourceGroupName "ProjetPowershell" AND -OsType "Windows"
-
-# Boucle pour installer grafana agent pour toutes les vm disponibles
-foreach ($singleVM in $vm) {
-  Write-Host "Installati
-on de l'agent Grafana sur $($singleVM.Name)..."
-  $result = Invoke-Command -ComputerName $singleVM.Name -ScriptBlock {
-    # Code pour installer Grafana-Agent sur la machine virtuelle actuelle
-   # Create file where grafana agent will be download
+# Create file where grafana agent will be download
 
 New-Item -ItemType Directory -Path C:\Script\InstallAgentGrafana
 
@@ -27,11 +18,6 @@ $GCLOUD_API_KEY = "eyJrIjoiNzE1YzU1NzI2ZGU2OTY4ZTZmYjEzNDJjYTYyYjIwZmY3YmJhNzU1O
 $GCLOUD_API_URL = "https://integrations-api-eu-west.grafana.net"
 
 Write-Host "Setting up Grafana agent"
-
-#if ( -Not [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ) {
-#  Write-Host "ERROR: The script needs to be run with Administrator privileges"
-#  exit
-#}
 
 # Check if required parameters are present
 if ($GCLOUD_STACK_ID -eq "") {
@@ -111,13 +97,4 @@ if ($jsonObj.status -eq "success") {
   Get-Service "Grafana Agent"
 } else {
   Write-Host "Failed to retrieve config"
-}
-    # Retourne un résultat indiquant si l'installation a réussi ou non
-    return $true
-  }
-  if ($result) {
-    Write-Host "L'agent Grafana-Agent a correctement été installé sur $($singleVM.Name)."
-  } else {
-    Write-Host "L'agent Grafana-Agent n'a pas correctement été installé sur $($singleVM.Name)."
-  }
 }
