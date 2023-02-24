@@ -44,28 +44,26 @@ function creationVM {
 
 function ListVM{
     $VMs = Get-AzVM -ResourceGroupName "VM-Projet-Powershell"
-    $VMObject = @()
+    $global:VMObject = @()
 
+    write-Output "La liste des Machines virtuelles"
     foreach ($VM in $VMs){
-        $VMObject += [PSCustomObject]@{
-            Name = $VM.Name
-            OS = $VM.OsType
-            Status = $VM.StatusCode
-            #IP = $VM.PublicIps
-        }
+        write-output "-------Machine Virtuelle-------"
+        Write-Output "Nom: $($VM.Name)"
+        Write-Output "OS: $($VM.OsType)"
+        Write-Output "Status: $($VM.StatusCode)"
+        $global:VMObject += @($VM.Name)
     }
-    return $VMObject
-
-
 }
+
+
 
 function SupprimerVM {
     Write-Output "Voici la liste des machines virtuels: "
-    $listVM = ListVM
-    $ListVM
+    $global:VMObject
     $VMDel = read-host "Entrez le nom de la VM à supprimer: "
-    foreach ($vm in $ListVM){
-        if ($vm.Name -eq $VMDel){
+    foreach ($vm in $VMObject){
+        if ($vm -eq $VMDel){
             $NomOK = "True"
             $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel
             if ($res.Status -eq "Succeeded") {
@@ -84,11 +82,10 @@ function SupprimerVM {
 
 function GestionVM {
     Write-Output "Voici la liste des machines virtuels: "
-    $listVM = ListVM
-    $ListVM
+    $global:VMObject
     $VMMod = read-host "Entrez le nom de la VM à gérer: "
-    foreach ($vm in $ListVM){
-        if ($vm.Name -eq $VMMod){
+    foreach ($vm in $VMObject){
+        if ($vm -eq $VMMod){
             $NomOK = "True"
             $rep = read-host "
             Que voulez-vous faire?
@@ -103,6 +100,7 @@ function GestionVM {
             
             if ($res.Status -eq "Succeeded") {
                 Write-Output "La VM $($VMMod) à été correctement $($mod)"
+                
             }
             else {
                 Write-Output "Il y a eu une erreur lors de la modification d'état de la VM"
@@ -110,10 +108,12 @@ function GestionVM {
             }    
             
         }
+        elseif ($NomOK -ne "True"){
+            Write-Output "Le nom entré n'est pas correcte"
+        }
+        break
     }
-    if ($NomOK -ne "True"){
-        Write-Output "Le nom entré n'est pas correcte"
-    }
+
 
 }
 
@@ -140,7 +140,7 @@ function main {
                 "
             switch ($rep){
                 { $_ -eq 1 } { creationVM }
-                { $_ -eq 2 } { $ListVM = ListVM ; $ListVM }
+                { $_ -eq 2 } { $ListVM = ListVM ; $ListVM}
                 { $_ -eq 3 } { SupprimerVM }
                 { $_ -eq 4 } { GestionVM }
                 { $_ -eq 5 } { InstalServiceVM }
