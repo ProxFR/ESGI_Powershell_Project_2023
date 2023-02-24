@@ -89,7 +89,16 @@ while ($continue){
         }
         4 {
             Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
-            $time = BenchmarkingTool -decimals 10000000 -thread 1
+
+            $username = Read-Host "Enter username"
+            $pass = Read-Host "Enter password" -AsSecureString 
+            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
+            $s = New-PSSession -ConnectionUri 'http://10.0.0.125:5985' -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck)
+            #Enter-PSSession -ConnectionUri 'http://10.0.0.125:5985' -Credential $cred
+
+            $time = Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList 10000000,1
+
+            #$time = BenchmarkingTool -decimals 10000000 -thread 1
             Read-Host -Prompt "Press any key to continue..."
 
             $saveScore = $true
