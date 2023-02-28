@@ -333,7 +333,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/templates/azuredeploy.json?token=GHSAT0AAAAAAB6COVOTMX4UQF56FONH6IKIY76CTXA"
+            "https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/templates/azuredeploy.json"
           ],
           "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File ConfigureRemotingForAnsible.ps1"
         }
