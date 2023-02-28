@@ -58,6 +58,7 @@ function SupprimerVM {
             $NomOK = "True"
             $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel
             Remove-AzPublicIpAddress -ResourceGroupName "VM-Projet-Powershell" -Name "$($VMDel)-PublicIP"
+            
             if ($res.Status -eq "Succeeded") {
                 Write-Output "La VM $($VMDel) à été correctement supprimé"
             }

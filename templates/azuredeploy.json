@@ -317,6 +317,27 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-04-01",
+      "name": "[concat(parameters('vmName'),'/', 'EnableWinRM')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/templates/azuredeploy.json?token=GHSAT0AAAAAAB6COVOTMX4UQF56FONH6IKIY76CTXA"
+          ],
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File ConfigureRemotingForAnsible.ps1"
+        }
+      }
     }
   ],
   "outputs": {
