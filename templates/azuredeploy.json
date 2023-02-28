@@ -31,7 +31,7 @@
     },
     "publicIpName": {
       "type": "string",
-      "defaultValue": "[concat(parameters('vmName'),'-', 'PublicIP')]",
+      "defaultValue": "parameters('vmName')-PublicIP",
       "metadata": {
         "description": "Name for the Public IP used to access the Virtual Machine."
       }
@@ -60,34 +60,9 @@
     },
     "OSVersion": {
       "type": "string",
-      "defaultValue": "2022-datacenter-core-smalldisk-g2",
-      "allowedValues": [
-        "2016-datacenter-gensecond",
-        "2016-datacenter-server-core-g2",
-        "2016-datacenter-server-core-smalldisk-g2",
-        "2016-datacenter-smalldisk-g2",
-        "2016-datacenter-with-containers-g2",
-        "2016-datacenter-zhcn-g2",
-        "2019-datacenter-core-g2",
-        "2019-datacenter-core-smalldisk-g2",
-        "2019-datacenter-core-with-containers-g2",
-        "2019-datacenter-core-with-containers-smalldisk-g2",
-        "2019-datacenter-gensecond",
-        "2019-datacenter-smalldisk-g2",
-        "2019-datacenter-with-containers-g2",
-        "2019-datacenter-with-containers-smalldisk-g2",
-        "2019-datacenter-zhcn-g2",
-        "2022-datacenter-azure-edition",
-        "2022-datacenter-azure-edition-core",
-        "2022-datacenter-azure-edition-core-smalldisk",
-        "2022-datacenter-azure-edition-smalldisk",
-        "2022-datacenter-core-g2",
-        "2022-datacenter-core-smalldisk-g2",
-        "2022-datacenter-g2",
-        "2022-datacenter-smalldisk-g2"
-      ],
+      "defaultValue": "2022-datacenter-azure-edition",
       "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+        "description": "The Windows version for the VM."
       }
     },
     "vmSize": {
@@ -124,7 +99,7 @@
   },
   "variables": {
     "storageAccountName": "[format('bootdiags{0}', uniqueString(resourceGroup().id))]",
-    "nicName": "[concat(parameters('vmName'),'-', 'VMNic')]",
+    "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
@@ -189,27 +164,27 @@
               "destinationAddressPrefix": "*"
             }
           },
-          {
+                    {
             "name": "default-allow-5985",
             "properties": {
               "priority": 110,
               "access": "Allow",
               "direction": "Inbound",
               "destinationPortRange": "5985",
-              "protocol": "*",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*"
             }
           },
-          {
+                    {
             "name": "default-allow-5986",
             "properties": {
               "priority": 120,
               "access": "Allow",
               "direction": "Inbound",
               "destinationPortRange": "5986",
-              "protocol": "*",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*"
@@ -295,16 +270,9 @@
           "osDisk": {
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "StandardSSD_LRS"
+              "storageAccountType": "Standard_LRS"
             }
-          },
-          "dataDisks": [
-            {
-              "diskSizeGB": 1023,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -349,27 +317,6 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2021-04-01",
-      "name": "[concat(parameters('vmName'),'/', 'EnableWinRM')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.7",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
-          ],
-          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File ConfigureRemotingForAnsible.ps1"
-        }
-      }
     }
   ],
   "outputs": {
