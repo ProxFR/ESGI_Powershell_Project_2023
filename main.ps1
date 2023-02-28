@@ -4,7 +4,7 @@ $auth = Connect-AzAccount #On laisse l'authentification à chaque lancement du s
 
 function creationVM {
     #Récupérer les informations d'authentification pour la connexion à la machine
-
+<#
     $ComputerName = read-host "Entrez le nom de la VM"
     $Location = "NorthEurope"
     $resourceGroupe = "VM-Projet-Powershell"
@@ -27,11 +27,11 @@ function creationVM {
         #-PublicIpAddressName $IPpublique.Name `
         #-OpenPorts 3389,5985 `
 
+#>
 
+    New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri azuredeploy.json -DeploymentDebugLogLevel All -Verbose
 
-    #New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri template.json -DeploymentDebugLogLevel All -Verbose
-
-}
+    }
 
 function ListVM{
     $VMs = Get-AzVM -ResourceGroupName "VM-Projet-Powershell"
@@ -57,6 +57,7 @@ function SupprimerVM {
         if ($vm -eq $VMDel){
             $NomOK = "True"
             $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel
+            Remove-AzPublicIpAddress -ResourceGroupName "VM-Projet-Powershell" -Name "$($VMDel)-PublicIP"
             if ($res.Status -eq "Succeeded") {
                 Write-Output "La VM $($VMDel) à été correctement supprimé"
             }
@@ -137,6 +138,27 @@ function InstallServiceVM {
     }
 }
 
+function connexionRDP {
+    Write-Output "Voici la liste des machines virtuels: "
+    $global:VMObject
+    $VMConnexion = read-host "Entrez le nom de la VM auquel se connecté: "
+    foreach ($vm in $VMObject){
+        if ($vm -eq $VMConnexion){
+            $IPpubVM = Get-AzPublicIpAddress -ResourceGroupName "VM-Projet-Powershell" -Name "$($VMConnexion)-PublicIP"
+            Write-Output "all"
+            $IPpubVM
+            Write-Output "ip"
+            $IPpubVM.IpAddress
+            mstsc /v:$IPpubVM.IpAddress:3389
+
+        }
+        if ($NomOK -ne "True"){
+            Write-Output "Le nom de la VM entrée n'est pas correcte"
+        }
+    }
+
+}
+
 
 function main {
     $resourceGroup = Get-AzResourceGroup
@@ -152,6 +174,7 @@ function main {
                 3. Supprimer une VM
                 4. Arreter ou démarrer une VM
                 5. Installation de service
+                6. Connexion RDP
                 0. Quiter le script
                 "
             switch ($rep){
@@ -160,6 +183,7 @@ function main {
                 { $_ -eq 3 } { SupprimerVM }
                 { $_ -eq 4 } { GestionVM }
                 { $_ -eq 5 } { InstallServiceVM }
+                { $_ -eq 6 } { connexionRDP }
                 Default {}
             }
         }
