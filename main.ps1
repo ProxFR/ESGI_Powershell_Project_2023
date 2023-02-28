@@ -27,7 +27,7 @@ function creationVM {
 
 #>
 
-    New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri templates/azuredeploy.json -DeploymentDebugLogLevel All -Verbose
+    New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri ./templates/azuredeploy.json -DeploymentDebugLogLevel All -Verbose
 
     }
 
@@ -49,15 +49,30 @@ function ListVM{
 
 function SupprimerVM {
     Write-Output "Voici la liste des machines virtuels: "
-    $global:VMObject
+    ListVM
     $VMDel = read-host "Entrez le nom de la VM à supprimer: "
     foreach ($vm in $VMObject){
         if ($vm -eq $VMDel){
             $NomOK = "True"
-            $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel
-            Remove-AzPublicIpAddress -ResourceGroupName "VM-Projet-Powershell" -Name "$($VMDel)-PublicIP"
-            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | Select-String -Pattern '$([regex]::escape($VMDel)_OsDisk_[0-9]_([0-9]|[a-z]){32}'
-            Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName
+            $vm = Get-AzVm -Name $VMDel -ResourceGroupName "VM-Projet-Powershell"
+            $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel -Verbose
+            #Remove-AzVMNetworkInterface -ResourceGroupName "VM-Projet-Powershell" 
+            #Remove-AzPublicIpAddress -ResourceGroupName "VM-Projet-Powershell" -Name "$($VMDel)-PublicIP" -Verbose
+            foreach($nicUri in $vm.NetworkProfile.NetworkInterfaces.Id) {
+                $nic = Get-AzNetworkInterface -ResourceGroupName $vm.ResourceGroupName -Name $nicUri.Split('/')[-1]
+                Remove-AzNetworkInterface -Name $nic.Name -ResourceGroupName $vm.ResourceGroupName -Force
+            
+                foreach($ipConfig in $nic.IpConfigurations) {
+                    if($ipConfig.PublicIpAddress -ne $null) {
+                        Remove-AzPublicIpAddress -ResourceGroupName $vm.ResourceGroupName -Name $ipConfig.PublicIpAddress.Id.Split('/')[-1] -Force
+                    }
+                }
+            }
+            $pattern = $($VMDel) + '_OsDisk_[0-9]_([0-9]|[a-z])'
+            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" -Force | Select-Object -Property Name | Select-String -Pattern $pattern -verbose
+            Write-Output "valeur de diskname:"
+            $DiskName
+            Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName -Verbose
 
             if ($res.Status -eq "Succeeded") {
                 Write-Output "La VM $($VMDel) à été correctement supprimé"
@@ -75,7 +90,7 @@ function SupprimerVM {
 
 function GestionVM {
     Write-Output "Voici la liste des machines virtuels: "
-    $global:VMObject
+    ListVM
     $VMMod = read-host "Entrez le nom de la VM à gérer: "
     foreach ($vm in $VMObject){
         if ($vm -eq $VMMod){
@@ -113,7 +128,7 @@ function GestionVM {
 function InstallServiceVM {
 
     Write-Output "Voici la liste des machines virtuels: "
-    $global:VMObject
+    ListVM
     $VMInstall = read-host "Entrez le nom de la VM où installer le script: "
     foreach ($vm in $VMObject){
         if ($vm -eq $VMInstall){
@@ -141,6 +156,7 @@ function InstallServiceVM {
 
 function connexionRDP {
     Write-Output "Voici la liste des machines virtuels: "
+    ListVM
     $global:VMObject
     $VMConnexion = read-host "Entrez le nom de la VM auquel se connecté: "
     foreach ($vm in $VMObject){
@@ -150,7 +166,7 @@ function connexionRDP {
             $IPpubVM
             Write-Output "ip"
             $IPpubVM.IpAddress
-            mstsc /v:$IPpubVM.IpAddress:3389
+            mstsc /v:'$($IPpubVM.IpAddress)':3389
 
         }
         if ($NomOK -ne "True"){
