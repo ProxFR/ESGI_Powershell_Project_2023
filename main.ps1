@@ -7,39 +7,30 @@ function creationVM {
 
     $ComputerName = read-host "Entrez le nom de la VM"
     $Location = "NorthEurope"
-    $ServiceName ="MonCloudapp"
     $resourceGroupe = "VM-Projet-Powershell"
     $VMSize="Standard_B1s"
     $ImageName="MicrosoftWindowsServer:WindowsServer:2016-Datacenter-with-Containers:latest"
-    $NumberOfDisks=8
-    $DiskSize=200
-    $SubnetName="default"
     $virtualNetwork = "VM-Projet-Powershell-$($ComputerName)"
-    $MediaLocation="https://xxxxxxx.blob.core.windows.net/vhds"
     $cred = Get-Credential
+    $IPpublique = New-AzPublicIpAddress -Name "VM-Projet-Powershell-IP-$($ComputerName)" -ResourceGroupName $resourceGroupe -AllocationMethod Static -Location $Location
 
-    # Create a public IP address
-    #$publicIpName = "myPublicIp-" + $ComputerName
-    #$publicIp = New-AzPublicIpAddress -ResourceGroupName $resourceGroupe -Name $publicIpName.toLowerCase() -Location $Location -AllocationMethod Static -DomainNameLabel $publicIpName.toLowerCase()
-
-    # Create a network interface
-    #$nicName = "NIC-" + $ComputerName
-    #$nic = New-AzureRmNetworkInterface -Name $nicName -ResourceGroupName $rgName -Location "West US" -SubnetId $subnet.Id -PublicIpAddressId $publicIp.Id
 
     New-AzVm `
         -ResourceGroupName $resourceGroupe `
         -Name $ComputerName `
         -Location $Location `
-        -PublicIpSku "Standard" `
         -VirtualNetworkName $virtualNetwork `
         -ImageName $ImageName `
         -Size $VMSize `
-        -Credential $cred `
-        #-PublicIpAddressId $publicIp.Id #test IP pub
-        #-SubnetName $SubnetName `
-        #-SecurityGroupName "myNetworkSecurityGroup" `
-        #-PublicIpAddressName "myPublicIpAddress" `
-    
+        -Credential $cred 
+        #-PublicIpAddressId $IPpublique.Id #test IP pub
+        #-PublicIpAddressName $IPpublique.Name `
+        #-OpenPorts 3389,5985 `
+
+
+
+    #New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri template.json -DeploymentDebugLogLevel All -Verbose
+
 }
 
 function ListVM{
@@ -119,6 +110,31 @@ function GestionVM {
 
 function InstallServiceVM {
 
+    Write-Output "Voici la liste des machines virtuels: "
+    $global:VMObject
+    $VMInstall = read-host "Entrez le nom de la VM où installer le script: "
+    foreach ($vm in $VMObject){
+        if ($vm -eq $VMInstall){
+            $NomOK = "True"
+            $Location = "NorthEurope"
+            $resourceGroupe = "VM-Projet-Powershell"
+            Write-Host "Veuillez entré une URL public qui pointe vers le fichier de configuration (ex: repôt GitHub)" -ForegroundColor Yellow
+            $fileURI = read-host "Entrez l'URL vers le fichier: "
+            $fileName = read-host "Entrez le nom du fichier à exécuter: "
+
+            $res = Set-AzVMCustomScriptExtension -ResourceGroupName $resourceGroupe `
+                -VMName $VMInstall `
+                -Location $Location `
+                -FileUri $fileURI `
+                -Run $fileName `
+                -Name InstallServiceVM
+                
+            $res
+        }
+    }
+    if ($NomOK -ne "True"){
+        Write-Output "Le nom de la VM entrée n'est pas correcte"
+    }
 }
 
 
@@ -143,7 +159,7 @@ function main {
                 { $_ -eq 2 } { $ListVM = ListVM ; $ListVM}
                 { $_ -eq 3 } { SupprimerVM }
                 { $_ -eq 4 } { GestionVM }
-                { $_ -eq 5 } { InstalServiceVM }
+                { $_ -eq 5 } { InstallServiceVM }
                 Default {}
             }
         }
@@ -161,7 +177,7 @@ function main {
                 
             }
             no {
-                Write-Host "Annulation..." -ForegroundColor Red
+                Write-Host "Annulation..." 
                 exit
             }
             default {Write-Host "Choix invalide" -ForegroundColor Red}
