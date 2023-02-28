@@ -29,7 +29,7 @@ function creationVM {
 
 #>
 
-    New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri azuredeploy.json -DeploymentDebugLogLevel All -Verbose
+    New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri ./templates/azuredeploy.json -DeploymentDebugLogLevel All -Verbose
 
     }
 
