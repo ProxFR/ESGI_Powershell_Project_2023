@@ -166,7 +166,7 @@ function connexionRDP {
             $IPpubVM
             Write-Output "ip"
             $IPpubVM.IpAddress
-            mstsc /v:'$($IPpubVM.IpAddress)':3389
+            mstsc /v:$($IPpubVM.IpAddress):3389
 
         }
         if ($NomOK -ne "True"){
