@@ -321,7 +321,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2021-04-01",
-      "name": "[concat(parameters('vmName'),'/', 'DisableInternalFirewall')]",
+      "name": "[concat(parameters('vmName'),'/', 'Provisioning')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
