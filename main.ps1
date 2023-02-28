@@ -69,10 +69,10 @@ function SupprimerVM {
                 }
             }
             $pattern = $($VMDel) + '_OsDisk_[0-9]_([0-9]|[a-z])'
-            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" -Force | Select-Object -Property Name | Select-String -Pattern $pattern -verbose
+            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | Select-Object -Property Name | Select-String -Pattern $pattern -verbose
             Write-Output "valeur de diskname:"
             $DiskName
-            Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName -Verbose
+            Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName -Force -Verbose
 
             if ($res.Status -eq "Succeeded") {
                 Write-Output "La VM $($VMDel) à été correctement supprimé"
