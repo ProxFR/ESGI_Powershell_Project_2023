@@ -321,7 +321,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2021-04-01",
-      "name": "[concat(parameters('vmName'),'/', 'deployeGraphanaAgent')]",
+      "name": "[concat(parameters('vmName'),'/', 'DeployGraphanaAgent')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
@@ -336,6 +336,27 @@
             "https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/Install-grafana-agent-V1.ps1"
           ],
           "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File Install-grafana-agent-V1.ps1"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-04-01",
+      "name": "[concat(parameters('vmName'),'/', 'DisableInternalFirewall')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://github.com/ProxFR/ESGI_Powershell_Project_2023/blob/main/scripts/DisableInternalFirewall.ps1"
+          ],
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File DisableInternalFirewall.ps1"
         }
       }
     }
