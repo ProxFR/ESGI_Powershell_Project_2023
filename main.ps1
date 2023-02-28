@@ -71,6 +71,8 @@ function SupprimerVM {
             $pattern = $($VMDel) + '_OsDisk_[0-9]_([0-9]|[a-z])'
             $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | Select-Object -Property Name | Select-String -Pattern $pattern -verbose
             Write-Output "valeur de diskname:"
+            $DiskName.Replace("@{name=","")
+            $DiskName.Replace("}","")
             $DiskName
             Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName -Force -Verbose
 
