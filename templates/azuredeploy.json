@@ -31,7 +31,7 @@
     },
     "publicIpName": {
       "type": "string",
-      "defaultValue": "myPublicIP",
+      "defaultValue": "[concat(parameters('vmName'),'-', 'PublicIP')]",
       "metadata": {
         "description": "Name for the Public IP used to access the Virtual Machine."
       }
@@ -60,7 +60,7 @@
     },
     "OSVersion": {
       "type": "string",
-      "defaultValue": "2022-datacenter-azure-edition",
+      "defaultValue": "2022-datacenter-core-smalldisk-g2",
       "allowedValues": [
         "2016-datacenter-gensecond",
         "2016-datacenter-server-core-g2",
@@ -179,11 +179,37 @@
           {
             "name": "default-allow-3389",
             "properties": {
-              "priority": 1000,
+              "priority": 100,
               "access": "Allow",
               "direction": "Inbound",
               "destinationPortRange": "3389",
               "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-5985",
+            "properties": {
+              "priority": 110,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "5985",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-5986",
+            "properties": {
+              "priority": 120,
+              "access": "Allow",
+              "direction": "Inbound",
+              "destinationPortRange": "5986",
+              "protocol": "*",
               "sourcePortRange": "*",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*"
@@ -323,6 +349,27 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2021-04-01",
+      "name": "[concat(parameters('vmName'),'/', 'EnableWinRM')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
+          ],
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File ConfigureRemotingForAnsible.ps1"
+        }
+      }
     }
   ],
   "outputs": {
