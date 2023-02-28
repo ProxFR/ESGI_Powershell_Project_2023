@@ -13,8 +13,6 @@ function creationVM {
     $virtualNetwork = "VM-Projet-Powershell-$($ComputerName)"
     $cred = Get-Credential
     $IPpublique = New-AzPublicIpAddress -Name "VM-Projet-Powershell-IP-$($ComputerName)" -ResourceGroupName $resourceGroupe -AllocationMethod Static -Location $Location
-
-
     New-AzVm `
         -ResourceGroupName $resourceGroupe `
         -Name $ComputerName `
@@ -29,7 +27,7 @@ function creationVM {
 
 #>
 
-    New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri ./templates/azuredeploy.json -DeploymentDebugLogLevel All -Verbose
+    New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri templates/azuredeploy.json -DeploymentDebugLogLevel All -Verbose
 
     }
 
