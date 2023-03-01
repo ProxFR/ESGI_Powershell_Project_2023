@@ -8,6 +8,15 @@ netsh advfirewall set allprofiles state off
 ############################# GRAFANA AGENT ##################################
 ##############################################################################
 
+
+# Replace Grafana Agent default config file
+Stop-Service "Grafana Agent"
+
+Move-Item 'C:\Program Files\Grafana Agent\agent-config.yaml' 'C:\Program Files\Grafana Agent\agent-config.yaml.old'
+wget https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/scripts/agent-config.yaml -OutFile c:\Program Files\Grafana Agent\agent-config.yaml
+
+Start-Service "Grafana Agent"
+
 # Install dependencies NuGet Package Provider
 Install-PackageProvider -Name NuGet -Force 
 
