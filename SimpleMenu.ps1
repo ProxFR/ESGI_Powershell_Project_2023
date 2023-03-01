@@ -7,28 +7,6 @@ $auth = Connect-AzAccount #On laisse l'authentification à chaque lancement du s
 
 function creationVM {
     #Récupérer les informations d'authentification pour la connexion à la machine
-    <#
-    $ComputerName = read-host "Entrez le nom de la VM"
-    $Location = "NorthEurope"
-    $resourceGroupe = "VM-Projet-Powershell"
-    $VMSize="Standard_B1s"
-    $ImageName="MicrosoftWindowsServer:WindowsServer:2016-Datacenter-with-Containers:latest"
-    $virtualNetwork = "VM-Projet-Powershell-$($ComputerName)"
-    $cred = Get-Credential
-    $IPpublique = New-AzPublicIpAddress -Name "VM-Projet-Powershell-IP-$($ComputerName)" -ResourceGroupName $resourceGroupe -AllocationMethod Static -Location $Location
-    New-AzVm `
-        -ResourceGroupName $resourceGroupe `
-        -Name $ComputerName `
-        -Location $Location `
-        -VirtualNetworkName $virtualNetwork `
-        -ImageName $ImageName `
-        -Size $VMSize `
-        -Credential $cred 
-        #-PublicIpAddressId $IPpublique.Id #test IP pub
-        #-PublicIpAddressName $IPpublique.Name `
-        #-OpenPorts 3389,5985 `
-
-#>
 
     New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri ./templates/azuredeploy.json -DeploymentDebugLogLevel All -Verbose
     Read-Host -Prompt "Press any key to continue..."
@@ -55,22 +33,6 @@ function ListVM {
     }
     return $table
 
-    #     write-Output "La liste des Machines virtuelles"
-    #     foreach ($VM in $VMs) {
-    #         $VMObject = [PSCustomObject]@{
-    #             "Nom" = $VM.Name
-    #             "OS"  = $VM.osType
-    #             "Status" = $VM.StatusCode
-    #         }
-
-    #         write-host "VM :" + $VM
-    #         write-output "-------Machine Virtuelle-------"
-    #         Write-Output "Nom: $($VM.Name)"
-    #         Write-Output "OS: $($VM.OsType)"
-    #         Write-Output "Status: $($VM.StatusCode)"
-    #         VMObject += @($VM.Name)
-    #         return $VMObject
-    #     }
 }
 
 
@@ -79,15 +41,12 @@ function SupprimerVM {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
     $VMs | Format-Table -autosize
-    #ListVM
     $VMDel = read-host "Entrez le nom de la VM à supprimer: "
     foreach ($vm in $VMs) {
         if ($vm.Nom -eq $VMDel) {
             $NomOK = "True"
             $vm = Get-AzVm -Name $VMDel -ResourceGroupName "VM-Projet-Powershell"
             $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel -Verbose
-            #Remove-AzVMNetworkInterface -ResourceGroupName "VM-Projet-Powershell" 
-            #Remove-AzPublicIpAddress -ResourceGroupName "VM-Projet-Powershell" -Name "$($VMDel)-PublicIP" -Verbose
             foreach ($nicUri in $vm.NetworkProfile.NetworkInterfaces.Id) {
                 $nic = Get-AzNetworkInterface -ResourceGroupName $vm.ResourceGroupName -Name $nicUri.Split('/')[-1]
                 Remove-AzNetworkInterface -Name $nic.Name -ResourceGroupName $vm.ResourceGroupName -Force
