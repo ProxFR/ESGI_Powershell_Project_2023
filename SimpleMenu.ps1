@@ -75,8 +75,7 @@ function SupprimerVM {
     Read-Host -Prompt "Press any key to continue..."
 }
 
-
-#################################################### VM MANAGEMENT #####################################################
+#################################################### VM MANAGEMENT #################################################
 function GestionVM {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
@@ -114,7 +113,7 @@ function GestionVM {
     Read-Host -Prompt "Press any key to continue..."
 }
 
-############################################### VM SERVICE INSTALLATION ################################################
+############################################### VM SERVICE INSTALLATION ############################################
 function InstallServiceVM {
 
     Write-Output "Voici la liste des machines virtuels: "
@@ -146,22 +145,16 @@ function InstallServiceVM {
     Read-Host -Prompt "Press any key to continue..."
 }
 
-################################################### VM RDP CONNEXION ######################################################
+################################################### VM RDP CONNEXION ###############################################
 function connexionRDP {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
     $VMs | Format-Table -autosize -Property Nom, PowerState, OS, PrivateIpAddress, PublicIpAddress
     $VMConnexion = read-host "Entrez le nom de la VM auquel se connecté: "
     foreach ($vm in $VMs) {
-        write-host $vm.Nom
         if ($vm.Nom -eq $VMConnexion) {
             $IPpubVM = Get-AzPublicIpAddress -ResourceGroupName "VM-Projet-Powershell" -Name "$($VMConnexion)-PublicIP"
-            Write-Output "all"
-            $IPpubVM
-            Write-Output "ip"
-            $IPpubVM.IpAddress
             mstsc /v:$($IPpubVM.IpAddress):3389
-
         }
         if ($NomOK -ne "True") {
             Write-Output "Le nom de la VM entrée n'est pas correcte"
@@ -170,229 +163,232 @@ function connexionRDP {
     Read-Host -Prompt "Press any key to continue..."
 }
 
-################################################## VM WINRM CONNEXION #####################################################
+################################################## VM WINRM CONNEXION ##############################################
 function connexionWinRM {
-    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" }
-    if ($VMs.Count -eq 0) {
-        Write-Host "No VM running" -ForegroundColor Red
-        Read-Host -Prompt "Press any key to continue..."
+    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" } #Get all running VMs
+    if ($VMs.Count -eq 0) { #If no VM running
+        Write-Host "No VM running" -ForegroundColor Red #Write error message
+        Read-Host -Prompt "Press any key to continue..." #Wait for user to press a key
         break
     }
     else
     {
-        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom
-        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ”
-        if ($choixVM -eq $VMs.Nom) {
+        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom # Display all running VMs
+        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ” # Ask user to choose a VM
+        foreach ($vm in $VMs) { # For each VM
+            if ($choixVM -eq $VMs.Nom) { # If the VM name is the same as the user input
 
-            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM
-            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1
-            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1
-            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress
-            $connectionUri = "http://" + $publicIPAddress + ":5985"
-
-            $username = Read-Host "Enter username"
-            $pass = Read-Host "Enter password" -AsSecureString 
-            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
-            Enter-PSSession -ConnectionUri $connectionUri -Credential $cred
-        }    
+                $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM # Get the VM
+                $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1 # Get the network profile
+                $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1 # Get the public IP
+                $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress # Get the public IP address
+                $connectionUri = "http://" + $publicIPAddress + ":5985" # Create the connection URI
+    
+                $username = Read-Host "Enter username" # Ask for username
+                $pass = Read-Host "Enter password" -AsSecureString # Ask for password
+                $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass # Create the credential
+                Enter-PSSession -ConnectionUri $connectionUri -Credential $cred # Connect to the VM
+            }
+        }
     }
 }
 
-##################################################################################################################
-################################################ BENCHMARKINGTOOL ################################################
-##################################################################################################################
+####################################################################################################################
+################################################ BENCHMARKINGTOOL ##################################################
+####################################################################################################################
 
-############################################### BENCHMARKING TOOL ###############################################
+################################################ BENCHMARKING TOOL #################################################
 
 function BenchmarkingTool {
     param (
-        [int]$decimals,
-        [int]$thread
+        [int]$decimals, # Number of decimals to calculate
+        [int]$thread # Number of threads to use
     )
-    $CalculatePiDecimals = {
-        param($Limit)
+    $CalculatePiDecimals = { # Function to calculate Pi with a given number of decimals
+        param($Limit) # Number of decimals to calculate
     
-        $k = 0
-        $pi = 0
-        $sign = 1
-        while ($k -lt $Limit) {
-            $pi = $pi + $sign * 4 / (2 * $k + 1)
-            $k++
-            $sign *= -1
+        $k = 0 # Number of iterations
+        $pi = 0 # Pi value
+        $sign = 1 # Sign of the current iteration
+        while ($k -lt $Limit) { # Loop until the number of decimals is reached
+            $pi = $pi + $sign * 4 / (2 * $k + 1) # Calculate Pi
+            $k++ # Increment the number of iterations
+            $sign *= -1 # Change the sign of the current iteration (1 -> -1 -> 1 -> -1 -> ...)
         } 
     }
     
-    $result = Measure-Command {
-        $MaxThreads = $thread # Nombre de threads physiques
-        $RunspacePool = [runspacefactory]::CreateRunspacePool(1, $MaxThreads)
-        $RunspacePool.Open()
-        $Jobs = @()
+    $result = Measure-Command { # Measure the time to calculate Pi with the given number of decimals and threads
+        $MaxThreads = $thread # Number of physical threads to use
+        $RunspacePool = [runspacefactory]::CreateRunspacePool(1, $MaxThreads) # Create a runspace pool with the given number of threads
+        $RunspacePool.Open() # Open the runspace pool
+        $Jobs = @() # Array to store the jobs
         
-        1..$thread | Foreach-Object { # Nombre de threads logiques
-            Write-Host "Lancement du thread $_" -ForegroundColor Green
-            $PowerShell = [powershell]::Create()
-            $PowerShell.RunspacePool = $RunspacePool
-            $PowerShell.AddScript($CalculatePiDecimals).AddArgument($decimals + 5)
-            $Jobs += $PowerShell.BeginInvoke()
+        1..$thread | Foreach-Object { # Loop for each logical thread
+            Write-Host "Lancement du thread $_" -ForegroundColor Green # Display the current thread
+            $PowerShell = [powershell]::Create() # Create a new PowerShell instance
+            $PowerShell.RunspacePool = $RunspacePool # Set the runspace pool
+            $PowerShell.AddScript($CalculatePiDecimals).AddArgument($decimals + 5) # Add the function to calculate Pi with the given number of decimals
+            $Jobs += $PowerShell.BeginInvoke() # Start the job
         }
         
-        while ($Jobs.IsCompleted -contains $false) {
-            Start-Sleep -Milliseconds 100
+        while ($Jobs.IsCompleted -contains $false) { # Loop until all jobs are completed
+            Start-Sleep -Milliseconds 100 # Wait 100ms
         }
-    } | Select-Object TotalSeconds
-    $time = [math]::round($result.TotalSeconds, 2)
-    Write-Host "Résultat : $time secondes" -ForegroundColor Yellow
+    } | Select-Object TotalSeconds # Select the total time to calculate Pi
+    $time = [math]::round($result.TotalSeconds, 2) # Round the time to 2 decimals
+    Write-Host "Résultat : $time secondes" -ForegroundColor Yellow 
     return $time
 }
 
+################################################ START BENCHMARK ###################################################
+
 function StartBenchmark {
-    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" }
-    if ($VMs.Count -eq 0) {
-        Write-Host "No VM running" -ForegroundColor Red
-        Read-Host -Prompt "Press any key to continue..."
+    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" } # Get all running VMs
+    if ($VMs.Count -eq 0) { # If no VM running
+        Write-Host "No VM running" -ForegroundColor Red # Display error message
+        Read-Host -Prompt "Press any key to continue..." # Wait for user input
         break
     }
     else
     {
-        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom
-        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ”
-        if ($choixVM -eq $VMs.Nom) {
+        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom # Display all running VMs
+        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ” # Ask user to choose a VM
+        if ($choixVM -eq $VMs.Nom) { # If the chosen VM is running
 
-            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM
-            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1
-            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1
-            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress
-            $connectionUri = "http://" + $publicIPAddress + ":5985"
+            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM # Get the VM
+            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1 # Get the network profile
+            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1 # Get the public IP
+            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress # Get the public IP address
+            $connectionUri = "http://" + $publicIPAddress + ":5985" # Create the connection URI
 
-            $username = Read-Host "Enter username"
-            $pass = Read-Host "Enter password" -AsSecureString 
-            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
+            $username = Read-Host "Enter username" # Ask user to enter VM's username
+            $pass = Read-Host "Enter password" -AsSecureString # Ask user to enter VM's password
+            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass # Create the credential object
 
-            Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
-            $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck)
+            Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow 
+            $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck) # Create a new session
 
-            $time = Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList 10000000, 1
+            $time = Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList 10000000, 1 # Invoke the benchmarking tool with default values
 
             Read-Host -Prompt "Press any key to continue..."
 
-            $saveScore = $true
-            while ($saveScore) {
-                $choixSave = read-host “Voulez-vous sauvegarder votre score ? (yes/no)”
+            $saveScore = $true # Set the save score variable to true
+            while ($saveScore) { # While the user wants to save the score
+                $choixSave = read-host “Voulez-vous sauvegarder votre score ? (yes/no)” # Ask user if he wants to save the score
                 
-                switch ($choixSave) {
-                    yes {
-                        # Get CPU model of the benchmarked instance
-                        $CPUModel = Invoke-Command -Session $s -ScriptBlock { Get-WmiObject -Class Win32_Processor -ComputerName. | Select-Object -Property Name }
-                        Write-Host CPU Model : $CPUModel.Name -ForegroundColor DarkYellow
+                switch ($choixSave) { #
+                    yes { # If the user wants to save the score
 
-                        $CPU = Read-Host "Enter you CPU Model (empty to enter the previous model)"
-                        if ($CPU -eq "") {
-                            $CPU = $CPUModel.Name
-                        }
-                        $score = [PSCustomObject]@{
-                            "CPU Model" = $CPU
-                            "Time"      = $time
-                        }
-                        $score | Export-Csv -Path '.\results\results.csv' -Append -NoTypeInformation
-                        Write-Host "Score saved" -ForegroundColor Green
+                        $CPUModel = Invoke-Command -Session $s -ScriptBlock { Get-WmiObject -Class Win32_Processor -ComputerName. | Select-Object -Property Name } # Get the CPU model of the benchmarked instance
+                        Write-Host CPU Model : $CPUModel.Name -ForegroundColor DarkYellow # Display the CPU model
 
-                        $saveScore = $false
+                        $CPU = Read-Host "Enter you CPU Model (empty to enter the previous model)" # Ask user to enter his CPU model or leave it empty to use the previous one
+                        if ($CPU -eq "") { # If the user left the CPU model empty
+                            $CPU = $CPUModel.Name # Use the previous CPU model
+                        }
+                        $score = [PSCustomObject]@{ # Create the score object
+                            "CPU Model" = $CPU # Add the CPU model to the score object
+                            "Time"      = $time # Add the time to the score object
+                        }
+                        $score | Export-Csv -Path '.\results\results.csv' -Append -NoTypeInformation # Save the score to the results file
+                        Write-Host "Score saved" -ForegroundColor Green 
+
+                        $saveScore = $false # Set the save score variable to false
                     }
                     no {
-                        $saveScore = $false
+                        $saveScore = $false # Set the save score variable to false
                     }
-                    default { Write-Host "Choix invalide" -ForegroundColor Red }
+                    default { Write-Host "Choix invalide" -ForegroundColor Red } # If the user entered an invalid choice
                 }
             }
         }
     }
 }
 
+############################################### STANDARD STRESS TEST ###############################################
 function StandardStressTest {
-    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" }
-    if ($VMs.Count -eq 0) {
-        Write-Host "No VM running" -ForegroundColor Red
-        Read-Host -Prompt "Press any key to continue..."
+    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" } # Get all running VMs
+    if ($VMs.Count -eq 0) { # If no VM is running
+        Write-Host "No VM running" -ForegroundColor Red # Display error message
+        Read-Host -Prompt "Press any key to continue..." # Wait for user input
         break
     }
     else
     {
-        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom
-        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ”
-        if ($choixVM -eq $VMs.Nom) {
+        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom # Display all running VMs
+        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ” # Ask user to choose a VM
+        if ($choixVM -eq $VMs.Nom) { # If the chosen VM is running
 
-            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM
-            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1
-            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1
-            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress
-            $connectionUri = "http://" + $publicIPAddress + ":5985"
+            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM # Get the chosen VM
+            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1 # Get the network profile of the chosen VM
+            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1 # Get the public IP of the chosen VM
+            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress # Get the public IP address of the chosen VM
+            $connectionUri = "http://" + $publicIPAddress + ":5985" # Create the connection URI
 
-            $username = Read-Host "Enter username"
-            $pass = Read-Host "Enter password" -AsSecureString 
-            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
+            $username = Read-Host "Enter username" # Ask user to enter VM's username
+            $pass = Read-Host "Enter password" -AsSecureString # Ask user to enter VM's password
+            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass # Create credential object
 
             Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
-            $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck)
+            $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck) # Create a new session
 
             # Get number of logical processors
-            $thread = Invoke-Command -Session $s -ScriptBlock { (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors}
+            $thread = Invoke-Command -Session $s -ScriptBlock { (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors} # Get number of logical processors
 
             # Start benchmarking tool with the number of logical processors
-            Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList 1000000000, $thread
+            Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList 1000000000, $thread # Start benchmarking tool
         }
     }
 }
 
+############################################### ADVANCED STRESS TEST ###############################################
 function AdvancedStressTest {
 
-    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" }
-    if ($VMs.Count -eq 0) {
-        Write-Host "No VM running" -ForegroundColor Red
-        Read-Host -Prompt "Press any key to continue..."
+    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" } # Get all running VMs
+    if ($VMs.Count -eq 0) { # If no VM is running
+        Write-Host "No VM running" -ForegroundColor Red # Display error message
+        Read-Host -Prompt "Press any key to continue..." # Wait for user input
         break
     }
     else
     {
-        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom
-        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ”
-        if ($choixVM -eq $VMs.Nom) {
+        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom # Display all running VMs
+        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ” # Ask user to choose a VM
+        if ($choixVM -eq $VMs.Nom) { # If the selected VM is running
 
-            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM
-            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1
-            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1
-            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress
-            $connectionUri = "http://" + $publicIPAddress + ":5985"
+            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM # Get the selected VM object
+            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1 # Get the network profile of the selected VM
+            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1 # Get the public IP of the selected VM
+            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress # Get the public IP address of the selected VM
+            $connectionUri = "http://" + $publicIPAddress + ":5985" # Create the connection URI
 
-            $username = Read-Host "Enter username"
-            $pass = Read-Host "Enter password" -AsSecureString 
-            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
+            $username = Read-Host "Enter username" # Ask user to enter VM's username
+            $pass = Read-Host "Enter password" -AsSecureString # Ask user to enter VM's password
+            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass # Create the credential object
 
-            $inputValue = 0
-            do {
+            $inputValue = 0 # Initialize the input value
+            do { # Loop until the user enters a positive integer
                 $inputValid = [uint]::TryParse(($threads = Read-Host 'How much threads do you want to use?'), [ref]$inputValue) # As to be check when 0 is entered
                 if (-not $inputValid) {
                     Write-Host "your input was not a positive integer..." -ForegroundColor Red
                 }
-            } while (-not $inputValid)
+            } while (-not $inputValid) 
     
-            $inputValue = 0
-            do {
+            $inputValue = 0 # Initialize the input value
+            do { # Loop until the user enters a positive integer
                 $inputValid = [uint]::TryParse(($decimals = Read-Host 'How much Pi decimals you want to calculate? (default is 10000000)'), [ref]$inputValue)
                 if (-not $inputValid) {
                     Write-Host "your input was not a positive integer..." -ForegroundColor Red
                 }
             } while (-not $inputValid)
             
-            Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
-            $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck)
+            Write-Host "Starting advanced stress test" -foregroundColor DarkYellow 
+            $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck) # Create a new session
 
-            # Start benchmarking tool with the number of logical processors
+            # Start advanced stress test with the number of logical processors and decimals
             Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList $decimals, $threads
         }
     }
-
-    Write-Host "Starting stress test" -foregroundColor DarkYellow
-    powershell.exe -File .\scripts\StressTool_Thread.ps1 -decimals $decimals -thread $threads # Start inside a new terminal to permit user to stop run space (CTRL+C)
 }
 
 ##################################################################################################################
@@ -437,58 +433,30 @@ function main {
 
             $choix = read-host “faire un choix ”
             switch ($choix) {
-                1 { 
-                    creationVM
-                    Read-Host -Prompt "Press any key to continue..." 
-                }
+                1 { creationVM }
                 2 { 
                     $ListVM = ListVM
                     $ListVM | Format-Table -Property Nom, PowerState, OS, PrivateIpAddress, PublicIpAddress -AutoSize | Sort-Object -Property Length
-                    Read-Host -Prompt "Press any key to continue..." 
                 }
-                3 { 
-                    supprimerVM
-                    Read-Host -Prompt "Press any key to continue..." 
-                }
-                4 { 
-                    GestionVM
-                    Read-Host -Prompt "Press any key to continue..." 
-                }
-                5 { 
-                    InstallServiceVM
-                    Read-Host -Prompt "Press any key to continue..." 
-                }
-                6 { 
-                    connexionRDP
-                    Read-Host -Prompt "Press any key to continue..." 
-                }
-                7 { 
-                    connexionWinRM
-                    Read-Host -Prompt "Press any key to continue..." 
-                }
+                3 { supprimerVM }
+                4 { GestionVM }
+                5 { InstallServiceVM }
+                6 { connexionRDP }
+                7 { connexionWinRM }
                 ########################################
                 8 {
                     write-host "Scoreboard (seconds)" -ForegroundColor DarkYellow
                     $scoreBoard = Import-Csv -Path '.\results\results.csv' | Sort-Object { [int]$_.Time }
                     $scoreBoard | Format-Table -AutoSize
-                    Read-Host -Prompt "Press any key to continue..."
                 }
-                9 {                    
-                    StartBenchmark
-                    Read-Host -Prompt "Press any key to continue..."
-                }
-                10 {
-                    StandardStressTest
-                    Read-Host -Prompt "Press any key to continue..."
-                }
-                11 {
-                    AdvancedStressTest
-                    Read-Host -Prompt "Press any key to continue..."
-                }
+                9 { StartBenchmark }
+                10 { StandardStressTest }
+                11 { AdvancedStressTest }
                 ########################################
                 ‘x’ { $continue = $false }
                 default { Write-Host "Choix invalide" -ForegroundColor Red }
             }
+            Read-Host -Prompt "Press any key to continue..."
         }
     }
     else {
@@ -499,8 +467,7 @@ function main {
             yes {
                 $RG = New-AzResourceGroup -Name "VM-Projet-Powershell" -Location "NorthEurope"
                 Write-Host "Ressource group créé" -ForegroundColor Green
-                main
-                
+                main                
             }
             no {
                 Write-Host "Annulation..." 
