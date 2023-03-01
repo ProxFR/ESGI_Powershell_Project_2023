@@ -117,8 +117,11 @@ Stop-Service "Grafana Agent"
 Move-Item 'C:\Program Files\Grafana Agent\agent-config.yaml' 'C:\Program Files\Grafana Agent\agent-config.yaml.old'
 wget https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/scripts/agent-config.yaml -OutFile 'C:\Program Files\Grafana Agent\agent-config.yaml'
 
-$service = Start-Service "Grafana Agent"
+Start-Service "Grafana Agent"
+
+$service = Get-Service "Grafana Agent"
 while ($service.Status -ne "Running") {
+    Start-Service "Grafana Agent"
     Start-Sleep -s 5
-    $service = Start-Service "Grafana Agent"
+    $service = Get-Service "Grafana Agent"    
 }
