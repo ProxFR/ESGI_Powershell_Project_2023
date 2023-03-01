@@ -61,7 +61,7 @@ logs:
       - replacement: grafana-agent.service
         target_label: unit
       windows_events:
-        bookmark_path: C:\Users\Administrator\AppData\Roaming\bookmark-application.xml
+        bookmark_path: C:\Users\ESGI\AppData\Roaming\bookmark-application.xml
         eventlog_name: Application
         labels:
           job: integrations/agent
@@ -79,7 +79,7 @@ logs:
         - computer
         target_label: agent_hostname
       windows_events:
-        bookmark_path: C:\Users\Administrator\AppData\Roaming\bookmark-application.xml
+        bookmark_path: C:\Users\ESGI\AppData\Roaming\bookmark-application.xml
         eventlog_name: Application
         labels:
           job: integrations/windows_exporter
@@ -97,7 +97,7 @@ logs:
         - computer
         target_label: agent_hostname
       windows_events:
-        bookmark_path: C:\Users\Administrator\AppData\Roaming\bookmark-system.xml
+        bookmark_path: C:\Users\ESGI\AppData\Roaming\bookmark-system.xml
         eventlog_name: System
         labels:
           job: integrations/windows_exporter
@@ -116,4 +116,3 @@ metrics:
   global:
     scrape_interval: 60s
   wal_directory: /tmp/grafana-agent-wal
-
