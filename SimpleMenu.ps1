@@ -9,7 +9,7 @@ function creationVM {
     #Récupérer les informations d'authentification pour la connexion à la machine
 
     New-AzResourceGroupDeployment -ResourceGroupName "VM-Projet-Powershell" -TemplateUri ./templates/azuredeploy.json -DeploymentDebugLogLevel All -Verbose
-    Read-Host -Prompt "Press any key to continue..."
+
 }
 
 function ListVM {
