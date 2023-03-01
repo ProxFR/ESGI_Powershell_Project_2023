@@ -46,25 +46,21 @@ function SupprimerVM {
         if ($vm.Nom -eq $VMDel) {
             $NomOK = "True"
             $vm = Get-AzVm -Name $VMDel -ResourceGroupName "VM-Projet-Powershell"
-            $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel -Verbose
+            $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel -Force -Verbose
             foreach ($nicUri in $vm.NetworkProfile.NetworkInterfaces.Id) {
                 $nic = Get-AzNetworkInterface -ResourceGroupName $vm.ResourceGroupName -Name $nicUri.Split('/')[-1]
                 Remove-AzNetworkInterface -Name $nic.Name -ResourceGroupName $vm.ResourceGroupName -Force
-            
+
                 foreach ($ipConfig in $nic.IpConfigurations) {
                     if ($ipConfig.PublicIpAddress -ne $null) {
                         Remove-AzPublicIpAddress -ResourceGroupName $vm.ResourceGroupName -Name $ipConfig.PublicIpAddress.Id.Split('/')[-1] -Force
                     }
                 }
             }
-            $pattern = $($VMDel) + '.*(D|d)isk.*([0-9]|[a-z]){32}$'
-            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | Select-Object -Property Name | Select-String -Pattern $pattern -verbose
-            Write-Output "valeur de diskname:"
-            $DiskName
-            $DiskName.Replace('@{name=', '')
-            $DiskName.Replace('}', '')
-            $DiskName
-            Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName -Force -Verbose
+            $pattern = $($VMDel) + '.(D|d)isk.([0-9]|[a-z]){32}'
+            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | where-object {$.name -match $pattern }
+
+            Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName.Name -Force -Verbose
 
             if ($res.Status -eq "Succeeded") {
                 Write-Output "La VM $($VMDel) à été correctement supprimé"
