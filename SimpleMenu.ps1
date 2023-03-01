@@ -57,11 +57,12 @@ function SupprimerVM {
                     }
                 }
             }
-            $pattern = $($VMDel) + '_OsDisk_[0-9]_([0-9]|[a-z])'
+            $pattern = $($VMDel) + '.*(D|d)isk.*([0-9]|[a-z]){32}$'
             $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | Select-Object -Property Name | Select-String -Pattern $pattern -verbose
             Write-Output "valeur de diskname:"
-            $DiskName.Replace("@{name=", "")
-            $DiskName.Replace("}", "")
+            $DiskName
+            $DiskName.Replace('@{name=', '')
+            $DiskName.Replace('}', '')
             $DiskName
             Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName -Force -Verbose
 
@@ -83,7 +84,6 @@ function GestionVM {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
     $VMs | Format-Table -autosize
-    #ListVM
     $VMMod = read-host "Entrez le nom de la VM à gérer: "
     foreach ($vm in $VMs) {
         if ($vm.Nom -eq $VMMod) {
@@ -122,7 +122,6 @@ function InstallServiceVM {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
     $VMs | Format-Table -autosize
-    #ListVM
     $VMInstall = read-host "Entrez le nom de la VM où installer le script: "
     foreach ($vm in $VMs) {
         if ($vm.Nom -eq $VMInstall) {
