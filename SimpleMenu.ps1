@@ -194,7 +194,6 @@ function connexionRDP {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
     $VMs | Format-Table -autosize
-    #$global:VMObject
     $VMConnexion = read-host "Entrez le nom de la VM auquel se connecté: "
     foreach ($vm in $VMs) {
         write-host $vm.Nom
@@ -212,6 +211,33 @@ function connexionRDP {
         }
     }
     Read-Host -Prompt "Press any key to continue..."
+}
+
+function connexionWinRM {
+    $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" }
+    if ($VMs.Count -eq 0) {
+        Write-Host "No VM running" -ForegroundColor Red
+        Read-Host -Prompt "Press any key to continue..."
+        break
+    }
+    else
+    {
+        $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom
+        $choixVM = read-host “Quelle VM voulez-vous utiliser ? ”
+        if ($choixVM -eq $VMs.Nom) {
+
+            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM
+            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1
+            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1
+            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress
+            $connectionUri = "http://" + $publicIPAddress + ":5985"
+
+            $username = Read-Host "Enter username"
+            $pass = Read-Host "Enter password" -AsSecureString 
+            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
+            Start-Process powershell {Enter-PSSession -ConnectionUri $connectionUri -Credential $cred}
+        }    
+    }
 }
 
 ##################################################################################################################
@@ -289,12 +315,13 @@ function main {
             write-host "4. Start/stop a VM" -ForegroundColor Cyan
             write-host "5. Install a service" -ForegroundColor Cyan
             write-host "6. Connect to a VM with RDP" -ForegroundColor Cyan
+            write-host "7. Connect to a VM with WinRM" -ForegroundColor Cyan
 
             write-host "`n--------------- Benchmark/Stress the instance ----------------" -ForegroundColor Green
-            write-host "7. Show the comparison results" -ForegroundColor Green
-            write-host "8. Start the benchmark (single thread)" -ForegroundColor Green
-            write-host "9. Start a stress test (all cores)" -ForegroundColor Green
-            write-host "10. Start an advanced stress test" -ForegroundColor Green
+            write-host "8. Show the comparison results" -ForegroundColor Green
+            write-host "9. Start the benchmark (single thread)" -ForegroundColor Green
+            write-host "10. Start a stress test (all cores)" -ForegroundColor Green
+            write-host "11. Start an advanced stress test" -ForegroundColor Green
 
             write-host "`nx. exit`n" -ForegroundColor Magenta
 
@@ -325,14 +352,18 @@ function main {
                     connexionRDP
                     Read-Host -Prompt "Press any key to continue..." 
                 }
+                7 { 
+                    connexionWinRM
+                    Read-Host -Prompt "Press any key to continue..." 
+                }
                 ########################################
-                7 {
+                8 {
                     write-host "Scoreboard (seconds)" -ForegroundColor DarkYellow
                     $scoreBoard = Import-Csv -Path '.\results\results.csv' | Sort-Object { [int]$_.Time }
                     $scoreBoard | Format-Table -AutoSize
                     Read-Host -Prompt "Press any key to continue..."
                 }
-                8 {
+                9 {
                     
                     $VMs = ListVM | Where-Object { $_.PowerState -eq "VM running" }
                     if ($VMs.Count -eq 0) {
@@ -396,12 +427,12 @@ function main {
                         }
                     }
                 }
-                9 {
+                10 {
                     Write-Host "Starting stress test" -foregroundColor DarkYellow
                     powershell.exe -File .\scripts\StressTool_Thread.ps1 # Start inside a new terminal to permit user to stop run space (CTRL+C)
                     Read-Host -Prompt "Press any key to continue..."
                 }
-                10 {
+                11 {
                     $inputValue = 0
                     do {
                         $inputValid = [uint]::TryParse(($threads = Read-Host 'How much threads do you want to use?'), [ref]$inputValue) # As to be check when 0 is entered

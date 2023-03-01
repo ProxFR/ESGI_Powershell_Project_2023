@@ -335,7 +335,7 @@
           "fileUris": [
             "https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/scripts/VMProvisionning.ps1"
           ],
-          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File VMProvisionning.ps1"
+          "commandToExecute": "powershell -executionpolicy Bypass -File \".\\VMProvisionning.ps1\" -GCLOUD_STACK_ID \"434131\" -GCLOUD_API_KEY \"eyJrIjoiMGEyYTE5YmE2N2U5MTAyY2ExMDZmY2ZkNzg2MzhkYzAyMTRhM2Q0YSIsIm4iOiJzdGFjay00MzQxMzEtZWFzeXN0YXJ0LWdjb20iLCJpZCI6NzA4MTQxfQ==\" -GCLOUD_API_URL \"https://integrations-api-eu-west.grafana.net\""
         }
       }
     }
