@@ -235,7 +235,7 @@ function connexionWinRM {
             $username = Read-Host "Enter username"
             $pass = Read-Host "Enter password" -AsSecureString 
             $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
-            Start-Process powershell {Enter-PSSession -ConnectionUri $connectionUri -Credential $cred}
+            Enter-PSSession -ConnectionUri $connectionUri -Credential $cred
         }    
     }
 }

@@ -1,4 +1,3 @@
-# Script to install Grafana agen for Windows
 ##############################################################################
 ################################# WINRM ######################################
 ##############################################################################
@@ -9,14 +8,26 @@ netsh advfirewall set allprofiles state off
 ############################# GRAFANA AGENT ##################################
 ##############################################################################
 
-param ($GCLOUD_STACK_ID, $GCLOUD_API_KEY, $GCLOUD_API_URL)
+
+# Create file where grafana agent will be download
+New-Item -ItemType Directory -Path C:\Script\InstallAgentGrafana
+
+$path = "C:\Script\InstallAgentGrafana"
+
+Set-Location $path
+
+# Install Module Powershell-yaml required to convert agent config from json to yaml
+Write-Host "Checking and installing required Powershell-yaml module"
+Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser
+Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+Install-Module PowerShell-yaml
+
+# Script to install Grafana agent for Windows
+$GCLOUD_STACK_ID = "540562"
+$GCLOUD_API_KEY = "eyJrIjoiNzE1YzU1NzI2ZGU2OTY4ZTZmYjEzNDJjYTYyYjIwZmY3YmJhNzU1OCIsIm4iOiJzdGFjay01NDA1NjItZWFzeXN0YXJ0LWdjb20iLCJpZCI6NzkxMzEzfQ=="
+$GCLOUD_API_URL = "https://integrations-api-eu-west.grafana.net"
 
 Write-Host "Setting up Grafana agent"
-
-if ( -Not [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544") ) {
-  Write-Host "ERROR: The script needs to be run with Administrator privileges"
-  exit
-}
 
 # Check if required parameters are present
 if ($GCLOUD_STACK_ID -eq "") {
@@ -38,10 +49,6 @@ Write-Host "GCLOUD_STACK_ID:" $GCLOUD_STACK_ID
 Write-Host "GCLOUD_API_KEY:" $GCLOUD_API_KEY
 Write-Host "GCLOUD_API_URL:" $GCLOUD_API_URL
 
-# Install Module Powershell-yaml required to convert agent config from json to yaml
-Write-Host "Checking and installing required Powershell-yaml module"
-Install-Module PowerShell-yaml
-
 Write-Host "Downloading Grafana agent Windows Installer"
 $DOWLOAD_URL = "https://github.com/grafana/agent/releases/latest/download/grafana-agent-installer.exe.zip"
 $OUTPUT_ZIP_FILE = ".\grafana-agent-installer.exe.zip"
@@ -51,7 +58,7 @@ Expand-Archive -LiteralPath $OUTPUT_ZIP_FILE -DestinationPath $OUTPUT_FILE
 
 # Install Grafana agent in silent mode
 Write-Host "Installing Grafana agent for Windows"
-.\grafana-agent-installer.exe /S
+.\grafana-agent-installer.exe\grafana-agent-installer.exe /S
 
 Write-Host "Retrieving and updating Grafana agent config"
 $CONFIG_URI = "$GCLOUD_API_URL/stacks/$GCLOUD_STACK_ID/agent_config?platforms=windows"
