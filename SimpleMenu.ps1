@@ -58,7 +58,7 @@ function SupprimerVM {
                 }
             }
             $pattern = $($VMDel) + '.(D|d)isk.([0-9]|[a-z]){32}'
-            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | where-object {$.name -match $pattern }
+            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | where-object { $_.name -match $pattern }
 
             Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName.Name -Force -Verbose
 
