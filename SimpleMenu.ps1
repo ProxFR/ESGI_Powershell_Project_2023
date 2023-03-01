@@ -49,16 +49,16 @@ function SupprimerVM {
             $res = Remove-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $VMDel -Force -Verbose
             foreach ($nicUri in $vm.NetworkProfile.NetworkInterfaces.Id) {
                 $nic = Get-AzNetworkInterface -ResourceGroupName $vm.ResourceGroupName -Name $nicUri.Split('/')[-1]
-                Remove-AzNetworkInterface -Name $nic.Name -ResourceGroupName $vm.ResourceGroupName -Force
-
+                Remove-AzNetworkInterface -Name $nic.Name -ResourceGroupName $vm.ResourceGroupName -Force -verbose
+            
                 foreach ($ipConfig in $nic.IpConfigurations) {
                     if ($ipConfig.PublicIpAddress -ne $null) {
-                        Remove-AzPublicIpAddress -ResourceGroupName $vm.ResourceGroupName -Name $ipConfig.PublicIpAddress.Id.Split('/')[-1] -Force
+                        Remove-AzPublicIpAddress -ResourceGroupName $vm.ResourceGroupName -Name $ipConfig.PublicIpAddress.Id.Split('/')[-1] -Force -verbose
                     }
                 }
             }
-            $pattern = $($VMDel) + '.(D|d)isk.([0-9]|[a-z]){32}'
-            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | where-object { $_.name -match $pattern }
+            $pattern = $($VMDel) + '_.*(D|d)isk.*([0-9]|[a-z]){32}'
+            $DiskName = get-AzDisk -ResourceGroupName "VM-Projet-Powershell" | where-object {$_.name -match $pattern }
 
             Remove-AzDisk -ResourceGroupName "VM-Projet-Powershell" -DiskName $DiskName.Name -Force -Verbose
 
@@ -329,56 +329,53 @@ function main {
                     {
                         $VMs | Format-Table -Property Nom -AutoSize | Sort-Object -Property Nom
                         $choixVM = read-host “Quelle VM voulez-vous utiliser ? ”
-                        foreach ($vm in $VMs) {
+                        if ($choixVM -eq $VMs.Nom) {
 
-                            if ($choixVM -eq $vm.Nom) {
+                            $VM = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $choixVM
+                            $networkProfile = $VM.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1
+                            $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1
+                            $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress
+                            $connectionUri = "http://" + $publicIPAddress + ":5985"
 
-                                $VMSelected = Get-AzVM -ResourceGroupName "VM-Projet-Powershell" -Name $vm.Nom
-                                $networkProfile = $VMSelected.NetworkProfile.NetworkInterfaces.id.Split("/") | Select-Object -Last 1
-                                $publicIP = (Get-AzNetworkInterface -Name $networkProfile).IpConfigurations.PublicIpAddress.Id.Split("/") | Select-Object -Last 1
-                                $publicIPAddress = (Get-AzPublicIpAddress -Name $publicIP).IpAddress
-                                $connectionUri = "http://" + $publicIPAddress + ":5985"
+                            $username = Read-Host "Enter username"
+                            $pass = Read-Host "Enter password" -AsSecureString 
+                            $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
 
-                                $username = Read-Host "Enter username"
-                                $pass = Read-Host "Enter password" -AsSecureString 
-                                $cred = New-Object -typename System.Management.Automation.PSCredential -argumentlist $username, $pass
+                            Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
+                            $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck)
+        
+                            $time = Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList 10000000, 1
 
-                                Write-Host "Starting benchmarking tool" -foregroundColor DarkYellow
-                                $s = New-PSSession -ConnectionUri $connectionUri -Credential $cred -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck -SkipRevocationCheck)
-            
-                                $time = Invoke-Command -Session $s -ScriptBlock ${function:BenchmarkingTool} -ArgumentList 10000000, 1
+                            Read-Host -Prompt "Press any key to continue..."
+        
+                            $saveScore = $true
+                            while ($saveScore) {
+                                $choixSave = read-host “Voulez-vous sauvegarder votre score ? (yes/no)”
 
-                                Read-Host -Prompt "Press any key to continue..."
-            
-                                $saveScore = $true
-                                while ($saveScore) {
-                                    $choixSave = read-host “Voulez-vous sauvegarder votre score ? (yes/no)”
-
-                                    # Get CPU model of the benchmarked instance
-                                    $CPUModel = Invoke-Command -Session $s -ScriptBlock { Get-WmiObject -Class Win32_Processor -ComputerName. | Select-Object -Property Name }
-                                    Write-Host CPU Model : $CPUModel.Name -ForegroundColor DarkYellow
-                                    
-                                    switch ($choixSave) {
-                                        yes {
-                                            $CPU = Read-Host "Enter you CPU Model (empty to enter the previous model)"
-                                            if ($CPU -eq "") {
-                                                $CPU = $CPUModel.Name
-                                            }
-                                            $score = [PSCustomObject]@{
-                                                "CPU Model" = $CPU
-                                                "Time"      = $time
-                                            }
-                                            $score | Export-Csv -Path '.\results\results.csv' -Append -NoTypeInformation
-                                            Write-Host "Score saved" -ForegroundColor Green
-            
-                                            $saveScore = $false
-                                            Read-Host -Prompt "Press any key to continue..."
+                                # Get CPU model of the benchmarked instance
+                                $CPUModel = Invoke-Command -Session $s -ScriptBlock { Get-WmiObject -Class Win32_Processor -ComputerName. | Select-Object -Property Name }
+                                Write-Host CPU Model : $CPUModel.Name -ForegroundColor DarkYellow
+                                
+                                switch ($choixSave) {
+                                    yes {
+                                        $CPU = Read-Host "Enter you CPU Model (empty to enter the previous model)"
+                                        if ($CPU -eq "") {
+                                            $CPU = $CPUModel.Name
                                         }
-                                        no {
-                                            $saveScore = $false
+                                        $score = [PSCustomObject]@{
+                                            "CPU Model" = $CPU
+                                            "Time"      = $time
                                         }
-                                        default { Write-Host "Choix invalide" -ForegroundColor Red }
+                                        $score | Export-Csv -Path '.\results\results.csv' -Append -NoTypeInformation
+                                        Write-Host "Score saved" -ForegroundColor Green
+        
+                                        $saveScore = $false
+                                        Read-Host -Prompt "Press any key to continue..."
                                     }
+                                    no {
+                                        $saveScore = $false
+                                    }
+                                    default { Write-Host "Choix invalide" -ForegroundColor Red }
                                 }
                             }
                         }
