@@ -40,7 +40,7 @@ function ListVM {
 function SupprimerVM {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
-    $VMs | Format-Table -autosize
+    $VMs | Format-Table -autosize -Property Nom, PowerState, OS, PrivateIpAddress, PublicIpAddress
     $VMDel = read-host "Entrez le nom de la VM à supprimer: "
     foreach ($vm in $VMs) {
         if ($vm.Nom -eq $VMDel) {
@@ -83,7 +83,7 @@ function SupprimerVM {
 function GestionVM {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
-    $VMs | Format-Table -autosize
+    $VMs | Format-Table -autosize -Property Nom, PowerState, OS, PrivateIpAddress, PublicIpAddress
     $VMMod = read-host "Entrez le nom de la VM à gérer: "
     foreach ($vm in $VMs) {
         if ($vm.Nom -eq $VMMod) {
@@ -121,7 +121,7 @@ function InstallServiceVM {
 
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
-    $VMs | Format-Table -autosize
+    $VMs | Format-Table -autosize -Property Nom, PowerState, OS, PrivateIpAddress, PublicIpAddress
     $VMInstall = read-host "Entrez le nom de la VM où installer le script: "
     foreach ($vm in $VMs) {
         if ($vm.Nom -eq $VMInstall) {
@@ -151,7 +151,7 @@ function InstallServiceVM {
 function connexionRDP {
     Write-Output "Voici la liste des machines virtuels: "
     $VMs = ListVM 
-    $VMs | Format-Table -autosize
+    $VMs | Format-Table -autosize -Property Nom, PowerState, OS, PrivateIpAddress, PublicIpAddress
     $VMConnexion = read-host "Entrez le nom de la VM auquel se connecté: "
     foreach ($vm in $VMs) {
         write-host $vm.Nom
