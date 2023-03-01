@@ -45,8 +45,6 @@ function ListVM{
     }
 }
 
-
-
 function SupprimerVM {
     Write-Output "Voici la liste des machines virtuels: "
     ListVM
