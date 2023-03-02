@@ -25,8 +25,8 @@ Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
 Install-Module PowerShell-yaml
 
 # Script to install Grafana agent for Windows
-$GCLOUD_STACK_ID = "540562"
-$GCLOUD_API_KEY = "eyJrIjoiNzE1YzU1NzI2ZGU2OTY4ZTZmYjEzNDJjYTYyYjIwZmY3YmJhNzU1OCIsIm4iOiJzdGFjay01NDA1NjItZWFzeXN0YXJ0LWdjb20iLCJpZCI6NzkxMzEzfQ=="
+$GCLOUD_STACK_ID = "434131"
+$GCLOUD_API_KEY = "eyJrIjoiMGEyYTE5YmE2N2U5MTAyY2ExMDZmY2ZkNzg2MzhkYzAyMTRhM2Q0YSIsIm4iOiJzdGFjay00MzQxMzEtZWFzeXN0YXJ0LWdjb20iLCJpZCI6NzA4MTQxfQ=="
 $GCLOUD_API_URL = "https://integrations-api-eu-west.grafana.net"
 
 Write-Host "Setting up Grafana agent"
@@ -119,9 +119,9 @@ wget https://raw.githubusercontent.com/ProxFR/ESGI_Powershell_Project_2023/main/
 
 Start-Service "Grafana Agent"
 
-$service = Get-Service "Grafana Agent"
-while ($service.Status -ne "Running") {
-    Start-Service "Grafana Agent"
-    Start-Sleep -s 5
-    $service = Get-Service "Grafana Agent"    
-}
+# $service = Get-Service "Grafana Agent"
+# while ($service.Status -ne "Running") {
+#     Start-Service "Grafana Agent"
+#     Start-Sleep -s 5
+#     $service = Get-Service "Grafana Agent"    
+# }
