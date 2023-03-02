@@ -1,15 +1,8 @@
 integrations:
-  agent:
-    enabled: true
-    relabel_configs:
-    - action: replace
-      source_labels:
-      - agent_hostname
-      target_label: instance
   prometheus_remote_write:
   - basic_auth:
-      password: eyJrIjoiOTg3ZmIzMDA2ODhlNWVkMGY3YTIyYzJkOTllY2U2YjNmMGJmYTA1NCIsIm4iOiJzdGFjay01NDA1NjItZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjc5MTMxM30=
-      username: 781954
+      password: eyJrIjoiZGRkNzRhMTJlZjMwNWE4YjZiYTljNjMzYjAyNjRhNjUzY2FmOTgwMSIsIm4iOiJzdGFjay00MzQxMzEtZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjcwODE0MX0=
+      username: 569033
     url: https://prometheus-prod-01-eu-west-0.grafana.net/api/prom/push
   windows_exporter:
     enabled: true
@@ -17,56 +10,13 @@ logs:
   configs:
   - clients:
     - basic_auth:
-        password: eyJrIjoiOTg3ZmIzMDA2ODhlNWVkMGY3YTIyYzJkOTllY2U2YjNmMGJmYTA1NCIsIm4iOiJzdGFjay01NDA1NjItZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjc5MTMxM30=
-        username: 389946
+        password: eyJrIjoiZGRkNzRhMTJlZjMwNWE4YjZiYTljNjMzYjAyNjRhNjUzY2FmOTgwMSIsIm4iOiJzdGFjay00MzQxMzEtZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjcwODE0MX0=
+        username: 283486
       url: https://logs-prod-eu-west-0.grafana.net/loki/api/v1/push
     name: integrations
     positions:
       filename: /tmp/positions.yaml
     scrape_configs:
-    - job_name: integrations/agent
-      journal:
-        labels:
-          instance: <hostname>
-          job: integrations/agent
-        max_age: 24h
-      pipeline_stages:
-      - match:
-          action: drop
-          drop_counter_reason: only_keep_grafana_agent_logs
-          selector: '{unit!="grafana-agent.service"}'
-      - regex:
-          expression: (level=(?P<log_level>[\s]*debug|warn|info|error))
-      - labels:
-          level: log_level
-      relabel_configs:
-      - source_labels:
-        - __journal__systemd_unit
-        target_label: unit
-    - job_name: integrations/agent
-      pipeline_stages:
-      - json:
-          expressions:
-            message: message
-      - regex:
-          expression: (level=(?P<log_level>[\s]*debug|warn|info|error))
-      - labels:
-          level: log_level
-      - output:
-          source: message
-      relabel_configs:
-      - source_labels:
-        - computer
-        target_label: instance
-      - replacement: grafana-agent.service
-        target_label: unit
-      windows_events:
-        bookmark_path: C:\Users\ESGI\AppData\Roaming\bookmark-application.xml
-        eventlog_name: Application
-        labels:
-          job: integrations/agent
-        use_incoming_timestamp: true
-        xpath_query: "*[System[Provider[@Name='Grafana Agent']]]"
     - job_name: integrations/windows-exporter-application
       pipeline_stages:
       - json:
@@ -110,9 +60,10 @@ metrics:
   - name: integrations
     remote_write:
     - basic_auth:
-        password: eyJrIjoiOTg3ZmIzMDA2ODhlNWVkMGY3YTIyYzJkOTllY2U2YjNmMGJmYTA1NCIsIm4iOiJzdGFjay01NDA1NjItZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjc5MTMxM30=
-        username: 781954
+        password: eyJrIjoiZGRkNzRhMTJlZjMwNWE4YjZiYTljNjMzYjAyNjRhNjUzY2FmOTgwMSIsIm4iOiJzdGFjay00MzQxMzEtZWFzeXN0YXJ0LXByb20tcHVibGlzaGVyIiwiaWQiOjcwODE0MX0=
+        username: 569033
       url: https://prometheus-prod-01-eu-west-0.grafana.net/api/prom/push
   global:
     scrape_interval: 60s
   wal_directory: /tmp/grafana-agent-wal
+
